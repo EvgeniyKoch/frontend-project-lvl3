@@ -6,7 +6,7 @@ module.exports = {
   mode: process.env.NODE_ENV || 'development',
   entry: './index.js',
   output: {
-    filename: '[name].[hash].js',
+    filename: '[name].js',
     path: path.resolve(__dirname, 'dist'),
   },
   module: {
@@ -21,6 +21,10 @@ module.exports = {
       {
         test: /\.css$/,
         use: ['style-loader', 'css-loader'],
+      },
+      {
+        test: /\.png$/,
+        loader: 'file-loader?name=[name].[ext]',
       },
     ],
   },
