@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png">
+    <title>RSS Reader</title>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="jumbotron">
+            <h1>RSS Reader</h1>
+            <p class="lead">Start reading RSS today! It is easy, it is nicely.</p>
+            <p class="text-muted">https://ru.hexlet.io/lessons.rss</p>
+            <form action="" class="form-inline rss-form">
+                <div class="form-group">
+                    <input type="text" required="" name="url" class="form-control" placeholder="rss link" />
+                </div>
+                <button type="submit" class="btn btn-primary ml-1">Add</button>
+            </form>
+        </div>
+        <div class="row">
+            <div class="col rss-items"></div>
+            <div class="col rss-links"></div>
+        </div>
+    </div>
+</body>
+</html>

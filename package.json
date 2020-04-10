@@ -1,0 +1,50 @@
+{
+  "name": "rss_reader",
+  "version": "0.1.0",
+  "description": "RSS Reader",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "jest --colors"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EvgeniyKoch/frontend-project-lvl3.git"
+  },
+  "author": "Evgeny Kochetov",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/EvgeniyKoch/frontend-project-lvl3/issues"
+  },
+  "homepage": "https://github.com/EvgeniyKoch/frontend-project-lvl3#readme",
+  "jest": {
+    "verbose": true,
+    "testURL": "http://localhost/"
+  },
+  "dependencies": {
+    "bootstrap": "^4.4.1",
+    "jquery": "^3.4.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.9.0",
+    "@babel/plugin-proposal-pipeline-operator": "^7.8.3",
+    "@babel/preset-env": "^7.9.0",
+    "babel-eslint": "^10.1.0",
+    "babel-jest": "^25.2.6",
+    "babel-loader": "^8.1.0",
+    "css-loader": "^3.5.2",
+    "debug": "^4.1.1",
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb": "^18.1.0",
+    "eslint-plugin-babel": "^5.3.0",
+    "eslint-plugin-import": "^2.20.2",
+    "eslint-plugin-jest": "^23.8.2",
+    "html-webpack-plugin": "^4.0.4",
+    "jest": "^25.2.7",
+    "jest-cli": "^25.2.7",
+    "popper.js": "^1.16.1",
+    "style-loader": "^1.1.3",
+    "webpack": "^4.42.1",
+    "webpack-cli": "^3.3.11",
+    "webpack-dev-server": "^3.10.3"
+  }
+}
