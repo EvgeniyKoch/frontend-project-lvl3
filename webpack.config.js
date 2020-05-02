@@ -5,6 +5,7 @@ module.exports = {
   context: path.resolve(__dirname, 'src'),
   mode: process.env.NODE_ENV || 'development',
   entry: './index.js',
+  devtool: 'inline-source-map',
   output: {
     filename: '[name].js',
     path: path.resolve(__dirname, 'dist'),
@@ -26,7 +27,7 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: 'index.html',
+      template: '../public/index.html',
     }),
   ],
 };

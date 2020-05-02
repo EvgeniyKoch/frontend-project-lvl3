@@ -21,8 +21,12 @@
     "testURL": "http://localhost/"
   },
   "dependencies": {
+    "axios": "^0.19.2",
     "bootstrap": "^4.4.1",
-    "jquery": "^3.4.1"
+    "jquery": "^3.4.1",
+    "lodash": "^4.17.15",
+    "melanke-watchjs": "^1.5.2",
+    "yup": "^0.28.5"
   },
   "devDependencies": {
     "@babel/core": "^7.9.0",
