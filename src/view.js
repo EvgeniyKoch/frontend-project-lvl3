@@ -37,6 +37,8 @@ export default (state, form) => {
         submitButton.disabled = true;
         break;
       case 'finished':
+        submitButton.disabled = false;
+        form.reset();
         container.innerHTML = 'User Created!';
         break;
       default:

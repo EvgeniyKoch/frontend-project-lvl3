@@ -2,10 +2,15 @@ import axios from 'axios';
 import * as yup from 'yup';
 
 import watch from './view';
+import parse from './parser';
 
 const routes = {
   proxy: () => 'https://cors-anywhere.herokuapp.com/',
 };
+
+const request = axios.create({
+  timeout: 5000,
+});
 
 const schema = yup.object().shape({
   website: yup.string().url(),
@@ -39,7 +44,10 @@ export default () => {
       valid: true,
       error: '',
     },
-    list: null,
+    listFeed: {
+      channel: [],
+      listPosts: [],
+    },
   };
 
   const [form] = document.forms;
@@ -56,12 +64,10 @@ export default () => {
     e.preventDefault();
     state.form.processState = 'sending';
     const { website } = state.form.field;
-    axios.get(`${routes.proxy()}${website}`)
+    request.get(`${routes.proxy()}${website}`)
       .then(({ data }) => {
         state.form.processState = 'finished';
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(data, 'text/xml');
-        console.log(doc, 'doc');
+        parse(data);
       })
       .catch((err) => {
         state.form.processError = errorMessages.network.error;
