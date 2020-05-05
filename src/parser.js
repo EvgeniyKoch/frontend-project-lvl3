@@ -25,7 +25,6 @@ export default (data) => {
     };
     listPosts.push(post);
   });
-  console.log(channel, 'channel');
-  console.log(listPosts, 'listPosts');
+
   return [channel, listPosts];
 };

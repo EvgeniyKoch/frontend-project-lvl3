@@ -20,6 +20,9 @@ const errorMessages = {
   network: {
     error: 'Network Problems. Try again.',
   },
+  link: {
+    error: 'This address already exists.',
+  },
 };
 
 const updateValidationState = (state) => {
@@ -41,13 +44,19 @@ export default () => {
       field: {
         website: '',
       },
+      allUrls: [],
       valid: true,
       error: '',
     },
-    listFeed: {
-      channel: [],
+    listFeeds: {
+      channels: [],
       listPosts: [],
     },
+  };
+
+  const setState = ([channel, listPosts]) => {
+    state.listFeeds.channels = [channel, ...state.listFeeds.channels];
+    state.listFeeds.listPosts = [...listPosts, ...state.listFeeds.listPosts];
   };
 
   const [form] = document.forms;
@@ -55,8 +64,34 @@ export default () => {
 
   watch(state, form);
 
+  const validateUrl = (url) => {
+    const hasUrl = state.form.allUrls.some((item) => item === url);
+    if (!hasUrl) {
+      return null;
+    }
+
+    state.form.processError = errorMessages.link.error;
+    state.form.processState = 'failed';
+    throw new Error('This address already exists');
+  };
+
+  const requestRss = (url) => {
+    request.get(url)
+      .then(({ data }) => {
+        state.form.processState = 'finished';
+        return parse(data)
+        |> setState;
+      })
+      .catch((err) => {
+        state.form.processError = errorMessages.network.error;
+        state.form.processState = 'failed';
+        throw err;
+      });
+  };
+
   searchInput.addEventListener('input', (e) => {
-    state.form.field.website = e.target.value;
+    const { value } = e.target;
+    state.form.field.website = value;
     updateValidationState(state);
   });
 
@@ -64,15 +99,8 @@ export default () => {
     e.preventDefault();
     state.form.processState = 'sending';
     const { website } = state.form.field;
-    request.get(`${routes.proxy()}${website}`)
-      .then(({ data }) => {
-        state.form.processState = 'finished';
-        parse(data);
-      })
-      .catch((err) => {
-        state.form.processError = errorMessages.network.error;
-        state.form.processState = 'failed';
-        throw err;
-      });
+    validateUrl(website);
+    state.form.allUrls.push(website);
+    requestRss(`${routes.proxy()}${website}`);
   });
 };
