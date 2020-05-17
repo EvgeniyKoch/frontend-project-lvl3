@@ -1,11 +1,14 @@
 import axios from 'axios';
 import * as yup from 'yup';
+import i18next from 'i18next';
+import { isEqual, uniqBy } from 'lodash';
 
 import watch from './view';
-import parse from './parser';
+import renderNodeToListFeed from './parser';
+import resources from './locales';
 
 const routes = {
-  proxy: () => 'https://cors-anywhere.herokuapp.com/',
+  proxy: (url) => `https://cors-anywhere.herokuapp.com/${url}`,
 };
 
 const request = axios.create({
@@ -15,15 +18,6 @@ const request = axios.create({
 const schema = yup.object().shape({
   website: yup.string().url(),
 });
-
-const errorMessages = {
-  network: {
-    error: 'Network Problems. Try again.',
-  },
-  link: {
-    error: 'This address already exists.',
-  },
-};
 
 const updateValidationState = (state) => {
   try {
@@ -36,7 +30,7 @@ const updateValidationState = (state) => {
   }
 };
 
-export default () => {
+export default async () => {
   const state = {
     form: {
       processState: 'filling',
@@ -54,39 +48,46 @@ export default () => {
     },
   };
 
-  const setState = ([channel, listPosts]) => {
-    state.listFeeds.channels = [channel, ...state.listFeeds.channels];
-    state.listFeeds.listPosts = [...listPosts, ...state.listFeeds.listPosts];
-  };
-
   const [form] = document.forms;
   const [searchInput] = form.elements;
 
-  watch(state, form);
+  i18next.init({ lng: 'en', debug: false, resources })
+    .then(() => watch(state, form));
 
-  const validateUrl = (url) => {
-    const hasUrl = state.form.allUrls.some((item) => item === url);
-    if (!hasUrl) {
-      return null;
+  const setStateListFeeds = ([channel, listPosts]) => {
+    if (isEqual(listPosts, state.listFeeds.listPosts)) {
+      return;
     }
 
-    state.form.processError = errorMessages.link.error;
-    state.form.processState = 'failed';
-    throw new Error('This address already exists');
+    state.listFeeds.channels = [channel, ...state.listFeeds.channels];
+    state.listFeeds.listPosts = [...listPosts, ...state.listFeeds.listPosts];
   };
 
   const requestRss = (url) => {
     request.get(url)
       .then(({ data }) => {
         state.form.processState = 'finished';
-        return parse(data)
-        |> setState;
+        state.form.allUrls = uniqBy([...state.form.allUrls, url]);
+        const newListFeeds = renderNodeToListFeed(data);
+        setStateListFeeds(newListFeeds);
+        setTimeout(() => requestRss(url), 5000);
       })
       .catch((err) => {
-        state.form.processError = errorMessages.network.error;
+        state.form.processError = true;
         state.form.processState = 'failed';
         throw err;
       });
+  };
+
+  const validateUrl = (url) => {
+    const hasUrl = state.form.allUrls.some((item) => item === routes.proxy(url));
+    if (!hasUrl) {
+      return null;
+    }
+
+    state.form.processError = i18next.t('errors.double');
+    state.form.processState = 'failed';
+    throw new Error(i18next.t('errors.double'));
   };
 
   searchInput.addEventListener('input', (e) => {
@@ -95,12 +96,11 @@ export default () => {
     updateValidationState(state);
   });
 
-  form.addEventListener('submit', async (e) => {
+  form.addEventListener('submit', (e) => {
     e.preventDefault();
     state.form.processState = 'sending';
     const { website } = state.form.field;
     validateUrl(website);
-    state.form.allUrls.push(website);
-    requestRss(`${routes.proxy()}${website}`);
+    requestRss(routes.proxy(website));
   });
 };

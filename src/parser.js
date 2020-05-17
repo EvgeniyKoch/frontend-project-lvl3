@@ -1,5 +1,3 @@
-import { uniqueId } from 'lodash';
-
 const parser = new DOMParser();
 
 export default (data) => {
@@ -8,7 +6,6 @@ export default (data) => {
   const postsNodeList = channelNod.querySelectorAll('item');
 
   const channel = {
-    id: uniqueId('channel_'),
     title: channelNod.querySelector('title').innerText,
     description: channelNod.querySelector('description').innerText,
     link: channelNod.querySelector('link').nextSibling.textContent.trimEnd(),
@@ -17,8 +14,6 @@ export default (data) => {
   const listPosts = [];
   postsNodeList.forEach((item) => {
     const post = {
-      channelId: channel.id,
-      id: uniqueId('post_'),
       title: item.querySelector('title').innerText,
       description: item.querySelector('description').innerText,
       link: item.querySelector('link').nextSibling.textContent.trimEnd(),

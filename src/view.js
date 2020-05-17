@@ -1,4 +1,5 @@
 import { watch } from 'melanke-watchjs';
+import i18next from 'i18next';
 
 const container = document.querySelector('.rss-items');
 const jumbotron = document.querySelector('.jumbotron');
@@ -8,6 +9,7 @@ const renderError = (element, error) => {
     element.classList.remove('is-invalid');
     return;
   }
+
   element.classList.add('is-invalid');
 };
 
@@ -39,13 +41,20 @@ const render = ({ channels, listPosts }) => {
   });
 };
 
-const renderWarning = (message) => {
-  const alert = document.createElement('div');
-  alert.classList.add('alert', 'alert-danger');
-  alert.style.marginTop = '10px';
-  alert.style.textAlign = 'center';
-  alert.innerText = message;
-  jumbotron.append(alert);
+const renderMessage = (message, type) => {
+  const oldAlert = document.querySelector('.alert');
+
+  if (oldAlert) {
+    oldAlert.remove();
+  }
+
+  const newAlert = document.createElement('div');
+  newAlert.classList.add('alert', `alert-${type}`);
+  newAlert.style.marginTop = '10px';
+  newAlert.style.textAlign = 'center';
+  newAlert.style.marginBottom = '-30px';
+  newAlert.innerText = message;
+  jumbotron.append(newAlert);
 };
 
 export default (state, form) => {
@@ -59,8 +68,13 @@ export default (state, form) => {
     submitButton.disabled = !state.form.valid;
   });
 
-  watch(state.form, 'processError', () => { // TODO change view message, add i18next
-    renderWarning(state.form.processError);
+  watch(state.form, 'processError', () => {
+    if (state.form.processError) {
+      renderMessage(i18next.t('errors.network'), 'danger');
+      return;
+    }
+
+    renderMessage(i18next.t('success'), 'success');
   });
 
   watch(state.form, 'error', () => {
@@ -71,6 +85,7 @@ export default (state, form) => {
     const { processState } = state.form;
     switch (processState) {
       case 'failed':
+        form.reset();
         submitButton.disabled = false;
         break;
       case 'filling':
@@ -80,6 +95,7 @@ export default (state, form) => {
         submitButton.disabled = true;
         break;
       case 'finished':
+        state.form.processError = false;
         submitButton.disabled = false;
         form.reset();
         render(state.listFeeds);
