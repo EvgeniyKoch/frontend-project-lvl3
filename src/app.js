@@ -1,10 +1,10 @@
 import axios from 'axios';
 import * as yup from 'yup';
 import i18next from 'i18next';
-import { isEqual, uniqBy } from 'lodash';
+import { uniqueId, differenceWith } from 'lodash';
 
-import watch from './view';
-import renderNodeToListFeed from './parser';
+import watch from './watchers';
+import parse from './parser';
 import resources from './locales';
 
 const routes = {
@@ -16,12 +16,12 @@ const request = axios.create({
 });
 
 const schema = yup.object().shape({
-  website: yup.string().url(),
+  website: yup.string().url().required(),
 });
 
-const updateValidationState = (state) => {
+const validate = (state, url) => {
   try {
-    schema.validateSync(state.form.field);
+    schema.validateSync(url);
     state.form.valid = true;
     state.form.error = '';
   } catch (e) {
@@ -30,21 +30,64 @@ const updateValidationState = (state) => {
   }
 };
 
+const validateUrl = (url, state) => {
+  const hasUrl = state.channels.some((item) => item.url === routes.proxy(url));
+  if (!hasUrl) {
+    return;
+  }
+
+  state.form.processError = i18next.t('errors.double');
+  state.form.processState = 'failed';
+  throw new Error(i18next.t('errors.double'));
+};
+
+const intervalRequest = 5000;
+
+const requestNewPosts = (state) => {
+  const promises = state.channels.map((channel) => {
+    return axios.get(channel.url)
+      .then(({ data }) => {
+        const feedData = parse(data);
+        const newPosts = feedData.items.map((item) => ({ ...item, channelId: channel.id }));
+        const oldPosts = state.listPosts.filter((post) => post.channelId === post.id);
+				const posts = differenceWith(newPosts, oldPosts, (comp1, comp2) => comp1.title === comp2.title);
+        state.listPosts.unshift(...posts);
+      });
+  });
+
+  Promise.all(promises).finally(() => {
+    setTimeout(() => requestNewPosts(state), intervalRequest);
+  });
+};
+
+const requestRss = (url, state) => {
+  request.get(url)
+    .then(({ data }) => {
+      const postsData = parse(data);
+      const channel = { url, id: uniqueId(), title: postsData.title };
+      const posts = postsData.listPosts.map((item) => ({ ...item, channelId: channel.id }));
+
+      state.channels.unshift(channel);
+      state.listPosts.unshift(...posts);
+      state.form.processError = null;
+      state.form.processState = 'finished';
+    })
+    .catch((err) => {
+      state.form.processError = true;
+      state.form.processState = 'failed';
+      throw err;
+    });
+};
+
 export default async () => {
   const state = {
+    channels: [],
+    listPosts: [],
     form: {
       processState: 'filling',
       processError: null,
-      field: {
-        website: '',
-      },
-      allUrls: [],
       valid: true,
-      error: '',
-    },
-    listFeeds: {
-      channels: [],
-      listPosts: [],
+      error: null,
     },
   };
 
@@ -54,53 +97,19 @@ export default async () => {
   i18next.init({ lng: 'en', debug: false, resources })
     .then(() => watch(state, form));
 
-  const setStateListFeeds = ([channel, listPosts]) => {
-    if (isEqual(listPosts, state.listFeeds.listPosts)) {
-      return;
-    }
-
-    state.listFeeds.channels = [channel, ...state.listFeeds.channels];
-    state.listFeeds.listPosts = [...listPosts, ...state.listFeeds.listPosts];
-  };
-
-  const requestRss = (url) => {
-    request.get(url)
-      .then(({ data }) => {
-        state.form.processState = 'finished';
-        state.form.allUrls = uniqBy([...state.form.allUrls, url]);
-        const newListFeeds = renderNodeToListFeed(data);
-        setStateListFeeds(newListFeeds);
-        setTimeout(() => requestRss(url), 5000);
-      })
-      .catch((err) => {
-        state.form.processError = true;
-        state.form.processState = 'failed';
-        throw err;
-      });
-  };
-
-  const validateUrl = (url) => {
-    const hasUrl = state.form.allUrls.some((item) => item === routes.proxy(url));
-    if (!hasUrl) {
-      return null;
-    }
-
-    state.form.processError = i18next.t('errors.double');
-    state.form.processState = 'failed';
-    throw new Error(i18next.t('errors.double'));
-  };
-
   searchInput.addEventListener('input', (e) => {
     const { value } = e.target;
-    state.form.field.website = value;
-    updateValidationState(state);
+    validate(value, state);
   });
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     state.form.processState = 'sending';
-    const { website } = state.form.field;
-    validateUrl(website);
-    requestRss(routes.proxy(website));
+    const data = new FormData(e.target);
+    const url = data.get('url');
+    validateUrl(url, state);
+    requestRss(routes.proxy(url), state);
   });
+
+  setTimeout(() => requestNewPosts(state), intervalRequest);
 };

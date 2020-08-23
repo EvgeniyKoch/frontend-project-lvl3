@@ -3,3 +3,4 @@
 assets
 .idea
 dist
+.DS_Store
