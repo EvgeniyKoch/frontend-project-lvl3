@@ -17,13 +17,15 @@ export const renderMessage = (message, type) => {
     oldAlert.remove();
   }
 
-  const newAlert = document.createElement('div');
-  newAlert.classList.add('alert', `alert-${type}`);
-  newAlert.style.marginTop = '10px';
-  newAlert.style.textAlign = 'center';
-  newAlert.style.marginBottom = '-30px';
-  newAlert.innerText = message;
-  jumbotron.append(newAlert);
+  if (message) {
+    const newAlert = document.createElement('div');
+    newAlert.classList.add('alert', `alert-${type}`);
+    newAlert.style.marginTop = '10px';
+    newAlert.style.textAlign = 'center';
+    newAlert.style.marginBottom = '-30px';
+    newAlert.innerText = message;
+    jumbotron.append(newAlert);
+  }
 };
 
 export const render = ({ channels, listPosts }) => {

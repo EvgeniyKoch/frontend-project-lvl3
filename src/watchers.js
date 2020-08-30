@@ -6,10 +6,6 @@ import { renderError, renderMessage, render } from './render';
 export default (state, form) => {
   const [searchInput, submitButton] = form;
 
-  watch(state.form.field, 'website', () => {
-    renderError(searchInput, state.form.error);
-  });
-
   watch(state.form, 'valid', () => {
     submitButton.disabled = !state.form.valid;
   });
@@ -24,7 +20,9 @@ export default (state, form) => {
   });
 
   watch(state.form, 'error', () => {
-    renderError(searchInput, state.form.error);
+    const { error } = state.form;
+    renderError(searchInput, error);
+    renderMessage(error, 'danger');
   });
 
   watch(state.form, 'processState', () => {
